@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result Viewer - Student Buddy</title>
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <style>
+        /* Previous styles remain the same */
+        :root {
+            --bg-primary: #f4f4f9;
+            --bg-secondary: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e1e1e1;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --primary-color: #3b82f6;
+            --primary-hover: #60a5fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .container {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result {
+            margin-top: 2rem;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        /* New styles for student summary card */
+        .student-summary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .result table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-secondary);
+        }
+
+        .result th,
+        .result td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .result tr:hover {
+            background-color: var(--bg-primary);
+        }
+
+        .error {
+            color: var(--error-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: var(--bg-primary);
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .result th,
+            .result td {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .student-summary {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        /* Header Styles */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeDown 1s ease-out;
+        }
+
+        .page-header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .page-header p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 100;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-button:hover {
+            background: var(--primary-hover);
+        }
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .back-button {
+                top: 0.5rem;
+                left: 0.5rem;
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-button">← Back</a>
+    
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        🌓
+    </button>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Result Viewer</h1>
+            <p>Check your semester-wise academic performance</p>
+        </div>
+
+        <div class="form-group">
+            <label for="yearDropdown">Academic Year</label>
+            <select id="yearDropdown" onchange="populateSemesterDropdown()">
+                <option value="">Select Year</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="semesterDropdown">Semester</label>
+            <select id="semesterDropdown">
+                <option value="">Select Semester</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="studentId">Student ID</label>
+            <input type="text" id="studentId" placeholder="Enter your student ID" />
+        </div>
+
+        <button onclick="getResult()">View Result</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const semesterData = [
+            { "semesterId": "244", "semesterYear": 2024, "semesterName": "Short" },
+            { "semesterId": "243", "semesterYear": 2024, "semesterName": "Fall" },
+            { "semesterId": "242", "semesterYear": 2024, "semesterName": "Summer" },
+            { "semesterId": "241", "semesterYear": 2024, "semesterName": "Spring" },
+            { "semesterId": "233", "semesterYear": 2023, "semesterName": "Fall" },
+            { "semesterId": "232", "semesterYear": 2023, "semesterName": "Summer" },
+            { "semesterId": "231", "semesterYear": 2023, "semesterName": "Spring" },
+            { "semesterId": "223", "semesterYear": 2022, "semesterName": "Fall" },
+            { "semesterId": "222", "semesterYear": 2022, "semesterName": "Summer" },
+            { "semesterId": "221", "semesterYear": 2022, "semesterName": "Spring" },
+            { "semesterId": "213", "semesterYear": 2021, "semesterName": "Fall" },
+            { "semesterId": "212", "semesterYear": 2021, "semesterName": "Summer" },
+            { "semesterId": "211", "semesterYear": 2021, "semesterName": "Spring" },
+            { "semesterId": "203", "semesterYear": 2020, "semesterName": "Fall" },
+            { "semesterId": "202", "semesterYear": 2020, "semesterName": "Summer" },
+            { "semesterId": "201", "semesterYear": 2020, "semesterName": "Spring" }
+        ];
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        }
+
+        function populateYearDropdown() {
+            const yearDropdown = document.getElementById("yearDropdown");
+            const years = [...new Set(semesterData.map(item => item.semesterYear))];
+            years.sort((a, b) => b - a);
+            years.forEach(year => {
+                const option = document.createElement("option");
+                option.value = year;
+                option.textContent = year;
+                yearDropdown.appendChild(option);
+            });
+        }
+
+        function populateSemesterDropdown() {
+            const year = document.getElementById("yearDropdown").value;
+            const semesterDropdown = document.getElementById("semesterDropdown");
+            semesterDropdown.innerHTML = '<option value="">Select Semester</option>';
+
+            if (year) {
+                const filteredSemesters = semesterData.filter(item => item.semesterYear == year);
+                filteredSemesters.forEach(semester => {
+                    const option = document.createElement("option");
+                    option.value = semester.semesterId;
+                    option.textContent = semester.semesterName;
+                    semesterDropdown.appendChild(option);
+                });
+            }
+        }
+
+        function calculateGPA(courses) {
+            let totalPoints = 0;
+            let totalCredits = 0;
+
+            courses.forEach(course => {
+                totalPoints += course.pointEquivalent * course.totalCredit;
+                totalCredits += course.totalCredit;
+            });
+
+            return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
+        }
+
+        async function getResult() {
+            const studentId = document.getElementById("studentId").value;
+            const semesterId = document.getElementById("semesterDropdown").value;
+            const resultDiv = document.getElementById("result");
+
+            if (!studentId || !semesterId) {
+                resultDiv.style.display = "block";
+                resultDiv.innerHTML = '<div class="error">Please enter a valid Student ID and select a semester.</div>';
+                return;
+            }
+
+            resultDiv.style.display = "none";
+
+            try {
+                const response = await fetch(`http://software.diu.edu.bd:8006/result?grecaptcha=&semesterId=${semesterId}&studentId=${studentId}`);
+                if (!response.ok) throw new Error("Failed to fetch result");
+
+                const data = await response.json();
+                resultDiv.style.display = "block";
+
+                if (data.length > 0) {
+                    const gpa = calculateGPA(data);
+                    const selectedSemester = semesterData.find(s => s.semesterId === semesterId);
+                    const semesterInfo = `${selectedSemester.semesterName} ${selectedSemester.semesterYear}`;
+
+                    let resultHTML = `
+                        <div class="student-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">Student ID</div>
+                                <div class="summary-value">${studentId}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Semester</div>
+                                <div class="summary-value">${semesterInfo}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">GPA</div>
+                                <div class="summary-value">${gpa}</div>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course ID</th>
+                                    <th>Course Title</th>
+                                    <th>Credit</th>
+                                    <th>Grade</th>
+                                    <th>Point</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.forEach(course => {
+                        resultHTML += `
+                            <tr>
+                                <td>${course.customCourseId}</td>
+                                <td>${course.courseTitle}</td>
+                                <td>${course.totalCredit}</td>
+                                <td>${course.gradeLetter}</td>
+                                <td>${course.pointEquivalent}</td>
+                            </tr>
+                        `;
+                    });
+
+                    resultHTML += '</tbody></table>';
+                    resultDiv.innerHTML = resultHTML;
+                } else {
+                    resultDiv.innerHTML = '<div class="error">No results found.</div>';
+                }
+            } catch (error) {
+                resultDiv.style.display = "block";
+                resultDiv.innerHTML = '<div class="error">Error fetching result. Please try again.</div>';
+            }
+        }
+
+        // Initialize the page
+        initTheme();
+        populateYearDropdown();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result Viewer</title>
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Get Student Result</h1>
+        <input type="text" id="studentId" placeholder="Enter Student ID" />
+        <div id="dropdowns">
+            <select id="yearDropdown"></select>
+            <select id="semesterDropdown"></select>
+        </div>
+        <button onclick="getResult()">Fetch Result</button>
+        <div class="card" id="studentInfo" style="display: none;"></div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <div class="loading-overlay" id="loading">
+        <dotlottie-player 
+            src="https://lottie.host/6d56832e-82f3-4f74-b90b-eb90667b6d53/kBQGAbGasK.lottie" 
+            background="transparent" 
+            speed="1" 
+            style="width: 300px; height: 300px" 
+            loop 
+            autoplay
+        ></dotlottie-player>
+        <div class="loading-text">Fetching Results...</div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

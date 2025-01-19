@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGPA Calculator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #0a2647, #144272);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform-origin: top;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #2d92ff;
+            box-shadow: 0 0 15px rgba(45, 146, 255, 0.3);
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 0.8rem;
+            background: linear-gradient(45deg, #0a2647, #144272);
+            padding: 0 0.5rem;
+        }
+
+        .switches {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2d92ff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #2d92ff;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        button:hover {
+            background: #1c7ed6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(45, 146, 255, 0.3);
+        }
+
+        .result {
+            text-align: center;
+            font-size: 1.2rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+        }
+
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading span {
+            width: 10px;
+            height: 10px;
+            background-color: #fff;
+            border-radius: 50%;
+            animation: bounce 0.5s alternate infinite;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .loading span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes bounce {
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-graduation-cap"></i> CGPA Calculator</h1>
+        <form id="cgpaForm">
+            <div class="input-group">
+                <input type="text" id="studentId" placeholder=" " required>
+                <label for="studentId">Student ID</label>
+            </div>
+            
+            <div class="switches">
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="improvement">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Include Improvement</span>
+                </div>
+                
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="project">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Include Project</span>
+                </div>
+            </div>
+
+            <button type="submit">
+                <i class="fas fa-calculator"></i> Calculate CGPA
+            </button>
+
+            <div class="loading" id="loading">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="result" id="result"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('cgpaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('studentId').value;
+            const improvement = document.getElementById('improvement').checked;
+            const project = document.getElementById('project').checked;
+            
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // Hide previous result and show loading
+            result.classList.remove('show');
+            loading.style.display = 'flex';
+            
+            // Simulate API call with setTimeout
+            setTimeout(() => {
+                loading.style.display = 'none';
+                
+                if (studentId.length < 5) {
+                    result.textContent = 'Please enter a valid Student ID';
+                    result.style.color = '#ff4646';
+                } else {
+                    // Mock CGPA calculation
+                    let cgpa = (Math.random() * (4.0 - 2.0) + 2.0).toFixed(2);
+                    
+                    // Adjust CGPA based on improvements and project
+                    if (improvement) cgpa = (parseFloat(cgpa) + 0.2).toFixed(2);
+                    if (project) cgpa = (parseFloat(cgpa) + 0.1).toFixed(2);
+                    
+                    // Ensure CGPA doesn't exceed 4.0
+                    cgpa = Math.min(4.0, parseFloat(cgpa)).toFixed(2);
+                    
+                    result.innerHTML = `<div style="animation: fadeIn 0.5s ease-out">
+                        <i class="fas fa-star" style="color: #ffd700"></i>
+                        Your CGPA: <strong>${cgpa}</strong>
+                    </div>`;
+                    result.style.color = '#fff';
+                }
+                
+                result.classList.add('show');
+            }, 1500);
+        });
+
+        // Add floating animation to the container
+        document.addEventListener('mousemove', function(e) {
+            const container = document.querySelector('.container');
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+            container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        // Reset container position when mouse leaves
+        document.addEventListener('mouseleave', function() {
+            const container = document.querySelector('.container');
+            container.style.transform = 'rotateY(0) rotateX(0)';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIU CGPA Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        /* Base styles */
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+            --primary-color: #1a73e8;
+            --hover-color: #1557b0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --border-color: #404040;
+            --primary-color: #4d8eef;
+            --hover-color: #3d7fd9;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            padding: 2rem;
+        }
+
+        /* Theme Switch */
+        .theme-switch-wrapper {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* Container and Cards */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-section,
+        .cgpa-card,
+        .graph-container,
+        .semester-card,
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--text-color);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            margin-bottom: 2rem;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Forms and Inputs */
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: var(--hover-color);
+        }
+
+        /* Hamster Loading Animation */
+        .loading-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .wheel-and-hamster {
+            --dur: 1s;
+            position: relative;
+            width: 12em;
+            height: 12em;
+            font-size: 14px;
+            margin: 0 auto;
+        }
+
+        .wheel,
+        .hamster,
+        .hamster div,
+        .spoke {
+            position: absolute;
+        }
+
+        .wheel,
+        .spoke {
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .wheel {
+            background: radial-gradient(100% 100% at center, hsla(0, 0%, 60%, 0) 47.8%, hsl(0, 0%, 60%) 48%);
+            z-index: 2;
+        }
+
+        .hamster {
+            animation: hamster var(--dur) ease-in-out infinite;
+            top: 50%;
+            left: calc(50% - 3.5em);
+            width: 7em;
+            height: 3.75em;
+            transform: rotate(4deg) translate(-0.8em, 1.85em);
+            transform-origin: 50% 0;
+            z-index: 1;
+        }
+
+        .hamster__head {
+            animation: hamsterHead var(--dur) ease-in-out infinite;
+            background: hsl(30, 90%, 55%);
+            border-radius: 70% 30% 0 100% / 40% 25% 25% 60%;
+            box-shadow: 0 -0.25em 0 hsl(30, 90%, 80%) inset, 0.75em -1.55em 0 hsl(30, 90%, 90%) inset;
+            top: 0;
+            left: -2em;
+            width: 2.75em;
+            height: 2.5em;
+            transform-origin: 100% 50%;
+        }
+
+        /* Rest of the hamster animation CSS remains the same */
+
+        .cgpa-card {
+            text-align: center;
+        }
+
+        .student-info {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cgpa-value {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin: 1rem 0;
+        }
+
+        .credit-info {
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .semester-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .semester-card {
+            cursor: pointer;
+        }
+
+        .semester-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        .loader {
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: loader 1s infinite linear;
+            margin: 20px auto;
+        }
+
+        @keyframes loader {
+            to {
+                transform: rotate(1turn);
+            }
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            text-align: center;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .results-table tr:nth-child(even) {
+            background: var(--bg-color);
+        }
+
+        .modal {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            color: var(--text-color);
+            background: var(--card-bg);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .close-button {
+            color: var(--text-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="theme-switch-wrapper">
+        <label class="theme-switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+        </label>
+        <span class="theme-label">Dark Mode</span>
+    </div>
+
+    <div class="container">
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="studentId">Student ID</label>
+                        <input type="text" id="studentId" placeholder="Enter Student ID" required>
+                    </div>
+                    <button type="submit">Calculate CGPA</button>
+                </div>
+                <div class="form-row">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="improvement" name="improvement">
+                        <label for="improvement">Include Improvements</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="hasProject" name="hasProject">
+                        <label for="hasProject">Include Final Year Project</label>
+                    </div>
+                </div>
+                <div class="project-inputs" id="projectInputs">
+                    <div class="input-group">
+                        <label for="projectCredit">Project Credit</label>
+                        <input type="number" id="projectCredit" value="6" min="0" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="projectResult">Project Grade Point</label>
+                        <input type="number" id="projectResult" value="4" min="0" max="4" step="0.01">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="results">
+            <!-- Loading animation will be inserted here when needed -->
+            <div class="loading-container" style="display: none;">
+                <div aria-label="Orange and tan hamster running in a metal wheel" role="img" class="wheel-and-hamster">
+                    <div class="wheel"></div>
+                    <div class="hamster">
+                        <div class="hamster__head">
+                            <div class="hamster__ear"></div>
+                            <div class="hamster__eye"></div>
+                            <div class="hamster__nose"></div>
+                        </div>
+                        <div class="hamster__body">
+                            <div class="hamster__limb hamster__limb--fr"></div>
+                            <div class="hamster__limb hamster__limb--fl"></div>
+                            <div class="hamster__limb hamster__limb--br"></div>
+                            <div class="hamster__limb hamster__limb--bl"></div>
+                            <div class="hamster__tail"></div>
+                        </div>
+                    </div>
+                    <div class="spoke"></div>
+                </div>
+                <p>Calculating CGPA...</p>
+            </div>
+        </div>
+
+        <div id="semesterModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle"></h2>
+                    <button class="close-button">&times;</button>
+                </div>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+        // Initialize dark mode based on user preference or localStorage
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            darkModeToggle.checked = true;
+        } else if (currentTheme === 'light') {
+            document.body.setAttribute('data-theme', 'light');
+            darkModeToggle.checked = false;
+        } else if (prefersDarkScheme.matches) {
+            document.body.setAttribute('data-theme', 'dark');
+            darkModeToggle.checked = true;
+        }
+
+        // Toggle dark mode
+        darkModeToggle.addEventListener('change', function () {
+            if (this.checked) {
+                document.body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+
+        const dupeResults = [];
+        const semestersList = [
+            { "semesterId": "244", "semesterYear": 2024, "semesterName": "Short" }, { "semesterId": "243", "semesterYear": 2024, "semesterName": "Fall" }, { "semesterId": "242", "semesterYear": 2024, "semesterName": "Summer" }, { "semesterId": "241", "semesterYear": 2024, "semesterName": "Spring" }, { "semesterId": "233", "semesterYear": 2023, "semesterName": "Fall" }, { "semesterId": "232", "semesterYear": 2023, "semesterName": "Summer" }, { "semesterId": "231", "semesterYear": 2023, "semesterName": "Spring" }, { "semesterId": "223", "semesterYear": 2022, "semesterName": "Fall" }, { "semesterId": "222", "semesterYear": 2022, "semesterName": "Summer" }, { "semesterId": "221", "semesterYear": 2022, "semesterName": "Spring" }, { "semesterId": "213", "semesterYear": 2021, "semesterName": "Fall" }, { "semesterId": "212", "semesterYear": 2021, "semesterName": "Summer" }, { "semesterId": "211", "semesterYear": 2021, "semesterName": "Spring" }, { "semesterId": "203", "semesterYear": 2020, "semesterName": "Fall" }, { "semesterId": "202", "semesterYear": 2020, "semesterName": "Summer" }, { "semesterId": "201", "semesterYear": 2020, "semesterName": "Spring" }, { "semesterId": "193", "semesterYear": 2019, "semesterName": "Fall" }, { "semesterId": "192", "semesterYear": 2019, "semesterName": "Summer" }, { "semesterId": "191", "semesterYear": 2019, "semesterName": "Spring" }, { "semesterId": "183", "semesterYear": 2018, "semesterName": "Fall" }, { "semesterId": "182", "semesterYear": 2018, "semesterName": "Summer" }, { "semesterId": "181", "semesterYear": 2018, "semesterName": "Spring" }, { "semesterId": "173", "semesterYear": 2017, "semesterName": "Fall" }, { "semesterId": "172", "semesterYear": 2017, "semesterName": "Summer" }, { "semesterId": "171", "semesterYear": 2017, "semesterName": "Spring" }, { "semesterId": "163", "semesterYear": 2016, "semesterName": "Fall" }, { "semesterId": "162", "semesterYear": 2016, "semesterName": "Summer" }, { "semesterId": "161", "semesterYear": 2016, "semesterName": "Spring" }, { "semesterId": "153", "semesterYear": 2015, "semesterName": "Fall" }, { "semesterId": "152", "semesterYear": 2015, "semesterName": "Summer" }, { "semesterId": "151", "semesterYear": 2015, "semesterName": "Spring" }, { "semesterId": "143", "semesterYear": 2014, "semesterName": "Fall" }, { "semesterId": "142", "semesterYear": 2014, "semesterName": "Summer" }, { "semesterId": "141", "semesterYear": 2014, "semesterName": "Spring" }, { "semesterId": "133", "semesterYear": 2013, "semesterName": "Fall" }, { "semesterId": "132", "semesterYear": 2013, "semesterName": "Summer" }, { "semesterId": "131", "semesterYear": 2013, "semesterName": "Spring" }, { "semesterId": "123", "semesterYear": 2012, "semesterName": "Fall" }, { "semesterId": "122", "semesterYear": 2012, "semesterName": "Summer" }, { "semesterId": "121", "semesterYear": 2012, "semesterName": "Spring" }, { "semesterId": "113", "semesterYear": 2011, "semesterName": "Fall" }, { "semesterId": "112", "semesterYear": 2011, "semesterName": "Summer" }, { "semesterId": "111", "semesterYear": 2011, "semesterName": "Spring" }, { "semesterId": "103", "semesterYear": 2010, "semesterName": "Fall" }, { "semesterId": "102", "semesterYear": 2010, "semesterName": "Summer" }, { "semesterId": "101", "semesterYear": 2010, "semesterName": "Spring" }, { "semesterId": "093", "semesterYear": 2009, "semesterName": "Fall" }, { "semesterId": "092", "semesterYear": 2009, "semesterName": "Summer" }, { "semesterId": "091", "semesterYear": 2009, "semesterName": "Spring" }, { "semesterId": "083", "semesterYear": 2008, "semesterName": "Fall" }
+        ];
+
+        function calculateSgpaManual(semester) {
+            let sc = 0;
+            let weighted = 0;
+            let semesterName = "";
+            let semesterYear = 0;
+            let wa = 0;
+
+            for (let c of semester) {
+                if (c["gradeLetter"] != "F") {
+                    semesterName = c["semesterName"];
+                    semesterYear = c["semesterYear"];
+                    weighted = weighted + c?.totalCredit * c?.pointEquivalent;
+                    sc = sc + Number(c["totalCredit"]);
+                }
+            }
+            wa = Number((weighted / sc).toFixed(2));
+
+            return [semesterName, semesterYear, sc, wa];
+        }
+
+        async function getStudentInfo(id) {
+            const results = [];
+            try {
+                for (const semester of semestersList) {
+                    try {
+                        const response = await fetch(`http://software.diu.edu.bd:8006/result?grecaptcha=&semesterId=${semester.semesterId}&studentId=${id}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data && Object.keys(data).length > 0) {
+                                const semesterResults = data.map(course => ({
+                                    ...course,
+                                    semesterName: semester.semesterName,
+                                    semesterYear: semester.semesterYear
+                                }));
+                                results.push(semesterResults);
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`Failed to fetch semester ${semester.semesterId}:`, error);
+                    }
+                }
+
+                if (results.length === 0) {
+                    throw new Error("No results found for this ID");
+                }
+
+                return {
+                    inc: 0,
+                    studentInfoObj: {
+                        id: id,
+                        name: results[0][0]?.studentName || "Student"
+                    },
+                    semesterResults: results
+                };
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Previous code remains same until calculateCgpa function
+
+        async function calculateCgpa(id, improvement, checkProject, projectCredit, projectResult) {
+            const { studentInfoObj, semesterResults } = await getStudentInfo(id);
+            let totalCredits = 0;
+            let totalWeightedPoints = 0;
+            const resultsList = [];
+            const processedCourses = new Map(); // To track highest grades for improvement cases
+
+            // Process each semester
+            for (let semester of semesterResults) {
+                let semesterCredits = 0;
+                let semesterWeightedPoints = 0;
+                let semesterName = semester[0]?.semesterName || "";
+                let semesterYear = semester[0]?.semesterYear || "";
+
+                // Process each course in the semester
+                for (const course of semester) {
+                    const courseId = course.courseId;
+                    const credit = Number(course.totalCredit);
+                    const gradePoint = Number(course.pointEquivalent);
+
+                    if (improvement) {
+                        // For improvement cases, keep track of the highest grade for each course
+                        if (!processedCourses.has(courseId) ||
+                            processedCourses.get(courseId).gradePoint < gradePoint) {
+                            processedCourses.set(courseId, {
+                                credit: credit,
+                                gradePoint: gradePoint
+                            });
+                        }
+                    } else {
+                        // For regular calculation, include all passing grades
+                        if (course.gradeLetter !== "F") {
+                            semesterCredits += credit;
+                            semesterWeightedPoints += credit * gradePoint;
+                        }
+                    }
+                }
+
+                // Calculate semester GPA and add to results
+                if (!improvement && semesterCredits > 0) {
+                    const sgpa = semesterWeightedPoints / semesterCredits;
+                    resultsList.push([semesterName, semesterYear, semesterCredits, sgpa]);
+                    totalCredits += semesterCredits;
+                    totalWeightedPoints += semesterWeightedPoints;
+                }
+            }
+
+            // Handle improvement cases
+            if (improvement) {
+                for (const [_, courseData] of processedCourses) {
+                    totalCredits += courseData.credit;
+                    totalWeightedPoints += courseData.credit * courseData.gradePoint;
+                }
+            }
+
+            // Add project if included
+            if (checkProject) {
+                const projectCreditNum = Number(projectCredit);
+                const projectGradePoint = Number(projectResult);
+                totalCredits += projectCreditNum;
+                totalWeightedPoints += projectCreditNum * projectGradePoint;
+                resultsList.push(["Final Year Project", "", projectCreditNum, projectGradePoint]);
+            }
+
+            // Calculate final CGPA
+            const finalCgpa = totalWeightedPoints / totalCredits;
+
+            // Sort semesters chronologically
+            resultsList.sort((a, b) => {
+                if (a[1] === b[1]) {
+                    const seasonOrder = { Spring: 1, Summer: 2, Fall: 3 };
+                    return seasonOrder[a[0]] - seasonOrder[b[0]];
+                }
+                return Number(a[1]) - Number(b[1]);
+            });
+
+            // Format semester data for display
+            const semesterData = resultsList.map(([name, year, credits, sgpa]) => {
+                const semesterCourses = semesterResults.find(sem =>
+                    sem[0]?.semesterName === name &&
+                    sem[0]?.semesterYear === year
+                ) || [];
+
+                return {
+                    name,
+                    year,
+                    credits,
+                    sgpa,
+                    courses: semesterCourses
+                };
+            });
+
+            return {
+                studentInfo: studentInfoObj,
+                cgpa: Number(finalCgpa.toFixed(2)),
+                totalCredits: totalCredits,
+                semesters: semesterData
+            };
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+
+            // Create main CGPA card with summary and graph
+            const cgpaHtml = `
+        <div class="cgpa-card">
+            <div class="student-info">
+                <h2>${results.studentInfo.name}</h2>
+                <p>ID: ${results.studentInfo.id}</p>
+            </div>
+            <div class="cgpa-value">${results.cgpa}</div>
+            <div class="credit-info">
+                Total Credits: ${results.totalCredits}
+            </div>
+        </div>
+        
+        <div class="graph-container">
+            <div class="summary-section" style="text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #ddd;">
+                <h2 style="color: #1a73e8; margin-bottom: 0.5rem;">Overall Performance Summary</h2>
+                <div style="font-size: 2.5rem; font-weight: bold; color: #1a73e8;">
+                    Overall CGPA: ${results.cgpa}
+                </div>
+                <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #666;">Total Credits</div>
+                        <div style="font-size: 1.2rem;">${results.totalCredits}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; color: #666;">Total Semesters</div>
+                        <div style="font-size: 1.2rem;">${results.semesters.length}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; color: #666;">Latest SGPA</div>
+                        <div style="font-size: 1.2rem;">${results.semesters[0]?.sgpa.toFixed(2) || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+            <canvas id="cgpaChart"></canvas>
+        </div>
+        
+        <div class="semester-results">
+            ${results.semesters.map(sem => `
+                <div class="semester-card" data-semester='${JSON.stringify(sem)}'>
+                    <div class="semester-header">
+                        <h3>${sem.name} ${sem.year}</h3>
+                    </div>
+                    <p>Credits: ${sem.credits}</p>
+                    <p>SGPA: ${sem.sgpa}</p>
+                </div>
+            `).join('')}
+        </div>`;
+
+            resultsDiv.innerHTML = cgpaHtml;
+
+            // Create CGPA trend chart
+            const ctx = document.getElementById('cgpaChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: results.semesters.map(sem => `${sem.name} ${sem.year}`),
+                    datasets: [{
+                        label: 'SGPA',
+                        data: results.semesters.map(sem => sem.sgpa),
+                        borderColor: '#1a73e8',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Semester-wise SGPA Trend'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 4
+                        }
+                    }
+                }
+            });
+
+            // Add click handlers for semester cards
+            document.querySelectorAll('.semester-card').forEach(card => {
+                card.addEventListener('click', () => showSemesterDetails(JSON.parse(card.dataset.semester)));
+            });
+        }
+
+
+        function showSemesterDetails(semesterData) {
+            const modal = document.getElementById('semesterModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            modalTitle.textContent = `${semesterData.name} ${semesterData.year}`;
+
+            const tableHtml = `
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Title</th>
+                    <th>Credits</th>
+                    <th>Grade</th>
+                    <th>Grade Point</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${semesterData.courses.map(course => `
+                    <tr>
+                        <td>${course.courseCode}</td>
+                        <td>${course.courseTitle}</td>
+                        <td>${course.totalCredit}</td>
+                        <td>${course.gradeLetter}</td>
+                        <td>${course.pointEquivalent}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`;
+
+            modalContent.innerHTML = tableHtml;
+            modal.classList.add('active');
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('searchForm');
+            const projectCheckbox = document.getElementById('hasProject');
+            const projectInputs = document.getElementById('projectInputs');
+            const modal = document.getElementById('semesterModal');
+            const closeButton = modal.querySelector('.close-button');
+
+            projectCheckbox.addEventListener('change', () => {
+                projectInputs.classList.toggle('active', projectCheckbox.checked);
+            });
+
+            closeButton.addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<div class="loading"><div class="loader"></div><p>Calculating CGPA...</p></div>';
+
+                try {
+                    const studentId = document.getElementById('studentId').value;
+                    const improvement = document.getElementById('improvement').checked;
+                    const hasProject = document.getElementById('hasProject').checked;
+                    const projectCredit = document.getElementById('projectCredit').value;
+                    const projectResult = document.getElementById('projectResult').value;
+
+                    const results = await calculateCgpa(studentId, improvement, hasProject, projectCredit, projectResult);
+                    displayResults(results);
+                } catch (error) {
+                    resultsDiv.innerHTML = `<div class="error">${error.message || 'Failed to calculate CGPA'}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
