@@ -51,12 +51,68 @@ function calculateSgpaManual(semester) {
     return [semesterName, semesterYear, sc, wa];
 }
 
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://software.diu.edu.bd:8006'
+    : '/api/proxy';
+
+async function fetchStudentInfo(id) {
+    try {
+        const response = await fetch(
+            API_BASE_URL === '/api/proxy'
+                ? `${API_BASE_URL}?studentId=${id}`
+                : `${API_BASE_URL}/result/studentInfo?studentId=${id}`,
+            {
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Origin': window.location.origin
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch student information');
+        }
+        const data = await response.json();
+        if (data && data.studentId) {
+            return {
+                id: data.studentId,
+                name: data.studentName,
+                program: data.programName,
+                batch: data.batchNo,
+                department: data.departmentName,
+                faculty: data.facultyName,
+                shift: data.shift,
+                campus: data.campusName,
+                programType: data.programType,
+                deptShortName: data.deptShortName,
+                progShortName: data.progShortName
+            };
+        }
+        throw new Error('No student information found');
+    } catch (error) {
+        console.error('Error fetching student info:', error);
+        throw error;
+    }
+}
+
 async function getStudentInfo(id) {
     const results = [];
     try {
         for (const semester of semestersList) {
             try {
-                const response = await fetch(`http://software.diu.edu.bd:8006/result?grecaptcha=&semesterId=${semester.semesterId}&studentId=${id}`);
+                const response = await fetch(
+                    API_BASE_URL === '/api/proxy'
+                        ? `${API_BASE_URL}?studentId=${id}&semesterId=${semester.semesterId}`
+                        : `${API_BASE_URL}/result?grecaptcha=&semesterId=${semester.semesterId}&studentId=${id}`,
+                    {
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': window.location.origin
+                        }
+                    }
+                );
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -549,33 +605,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-
-async function fetchStudentInfo(id) {
-    try {
-        const response = await fetch(`http://software.diu.edu.bd:8006/result/studentInfo?studentId=${id}`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch student information');
-        }
-        const data = await response.json();
-        if (data && data.studentId) {
-            return {
-                id: data.studentId,
-                name: data.studentName,
-                program: data.programName,
-                batch: data.batchNo,
-                department: data.departmentName,
-                faculty: data.facultyName,
-                shift: data.shift,
-                campus: data.campusName,
-                programType: data.programType,
-                deptShortName: data.deptShortName,
-                progShortName: data.progShortName
-            };
-        }
-        throw new Error('No student information found');
-    } catch (error) {
-        console.error('Error fetching student info:', error);
-        throw error;
-    }
-}
